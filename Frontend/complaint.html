@@ -363,7 +363,7 @@ formData.append(
 );
 
 const response = await fetch(
-    "http://localhost:5000/api/complaints/create",
+    "https://cityfix-ai-backend.onrender.com/api/complaints/create",
     {
         method: "POST",
         body: formData
@@ -556,7 +556,7 @@ async function loadCitizenDashboard(){
 
     const response =
     await fetch(
-        `http://localhost:5000/api/complaints/citizen/${citizenId}`
+        `https://cityfix-ai-backend.onrender.com/api/complaints/citizen/${citizenId}`
     );
 
     const complaints =
@@ -605,7 +605,7 @@ async function loadMyComplaints(){
 
     const response =
     await fetch(
-        `http://localhost:5000/api/complaints/citizen/${citizenId}`
+        `https://cityfix-ai-backend.onrender.com/api/complaints/citizen/${citizenId}`
     );
 
     const data =
@@ -640,7 +640,7 @@ async function loadMyComplaints(){
             <br>
 
             <img
-src="http://localhost:5000/uploads/${c.image}"
+src="https://cityfix-ai-backend.onrender.com/uploads/${c.image}"
 width="250"
 class="complaint-img"
 onclick="openImage(this.src)"

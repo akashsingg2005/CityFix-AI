@@ -280,7 +280,7 @@ async function loadComplaints(){
 localStorage.getItem("name");
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/officer/${officerId}`
+        `https://cityfix-ai-backend.onrender.com/api/complaints/officer/${officerId}`
     );
 
     const data = await response.json();
@@ -366,7 +366,7 @@ data.filter(
             <br>
 
             <img
-    src="http://localhost:5000/uploads/${complaint.image}"
+    src="https://cityfix-ai-backend.onrender.com/uploads/${complaint.image}"
     width="250"
     height="180"
     style="
@@ -512,7 +512,7 @@ async function updateStatus(
     ).value;
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/update/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/update/${id}`,
         {
             method:"PUT",
 

@@ -261,7 +261,7 @@ let officers = [];
 async function loadOfficers(){
 
     const response = await fetch(
-        "http://localhost:5000/api/auth/officers"
+        "https://cityfix-ai-backend.onrender.com/api/auth/officers"
     );
 
     officers = await response.json();
@@ -270,7 +270,7 @@ async function loadOfficers(){
 async function loadComplaints(){
 
     const response = await fetch(
-        "http://localhost:5000/api/complaints/all"
+        "https://cityfix-ai-backend.onrender.com/api/complaints/all"
     );
 
     const complaints = await response.json();
@@ -300,7 +300,7 @@ async function loadComplaints(){
             <td>${complaint.location}</td>
      <td>
     <img
-        src="http://localhost:5000/uploads/${complaint.image}"
+        src="https://cityfix-ai-backend.onrender.com/uploads/${complaint.image}"
         width="80"
         height="60"
         style="border-radius:8px; object-fit:cover; cursor:pointer;"
@@ -550,7 +550,7 @@ function createAnalyticsChart(
 async function loadDashboard(){
 
     const response = await fetch(
-        "http://localhost:5000/api/complaints/all"
+        "https://cityfix-ai-backend.onrender.com/api/complaints/all"
     );
 
     const data = await response.json();
@@ -603,7 +603,7 @@ const todayComplaints = data.filter(
 
 
     const userResponse = await fetch(
-    "http://localhost:5000/api/auth/users"
+    "https://cityfix-ai-backend.onrender.com/api/auth/users"
 );
 
 const users = await userResponse.json();
@@ -639,7 +639,7 @@ function exportComplaints(){
 async function resolveComplaint(id){
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/update/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/update/${id}`,
         {
             method: "PUT",
             headers:{
@@ -672,7 +672,7 @@ async function deleteComplaint(id){
     }
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/delete/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/delete/${id}`,
         {
             method:"DELETE"
         }
@@ -691,7 +691,7 @@ loadOfficerTable();
 async function inProgressComplaint(id){
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/update/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/update/${id}`,
         {
             method:"PUT",
             headers:{
@@ -727,7 +727,7 @@ async function assignComplaint(id){
     }
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/assign/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/assign/${id}`,
         {
             method:"PUT",
 
@@ -754,13 +754,13 @@ loadOfficerTable();
 async function loadOfficerTable(){
 
     const officerResponse = await fetch(
-        "http://localhost:5000/api/auth/officers"
+        "https://cityfix-ai-backend.onrender.com/api/auth/officers"
     );
 
     const officers = await officerResponse.json();
 
     const complaintResponse = await fetch(
-        "http://localhost:5000/api/complaints/all"
+        "https://cityfix-ai-backend.onrender.com/api/complaints/all"
     );
 
     const complaints = await complaintResponse.json();
@@ -849,7 +849,7 @@ bestOfficer || "No Data";
 async function loadUsers(){
 
     const response = await fetch(
-        "http://localhost:5000/api/auth/users"
+        "https://cityfix-ai-backend.onrender.com/api/auth/users"
     );
 
     const users = await response.json();
@@ -875,7 +875,7 @@ async function loadUsers(){
 async function loadAnalytics(){
 
     const response = await fetch(
-        "http://localhost:5000/api/complaints/all"
+        "https://cityfix-ai-backend.onrender.com/api/complaints/all"
     );
 
     const complaints = await response.json();
@@ -928,7 +928,7 @@ async function updatePriority(
 ){
 
     const response = await fetch(
-        `http://localhost:5000/api/complaints/priority/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/complaints/priority/${id}`,
         {
             method:"PUT",
 
@@ -976,7 +976,7 @@ async function addOfficer(){
         ).value;
 
     const response = await fetch(
-        "http://localhost:5000/api/auth/officer/add",
+        "https://cityfix-ai-backend.onrender.com/api/auth/officer/add",
         {
             method:"POST",
 
@@ -1010,7 +1010,7 @@ async function deleteOfficer(id){
     }
 
     const response = await fetch(
-        `http://localhost:5000/api/auth/officer/delete/${id}`,
+        `https://cityfix-ai-backend.onrender.com/api/auth/officer/delete/${id}`,
         {
             method:"DELETE"
         }
