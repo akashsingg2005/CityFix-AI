@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CityFix AI - Register</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+<div class="login-card">
+<div id="messageBox"></div>
+
+<form id="registerForm">
+
+    <div class="input-group">
+
+        <label>Full Name</label>
+
+        <input
+            type="text"
+            id="name"
+            placeholder="Enter Your Name"
+            required
+        >
+
+    </div>
+
+    <div class="input-group">
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter Email"
+            required
+        >
+
+    </div>
+
+    <div class="input-group">
+
+        <label>Password</label>
+
+        <div class="password-box">
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Enter Password"
+        required
+    >
+
+    <span
+        class="eye-btn"
+        onclick="togglePassword('password')"
+    >
+        👁️
+    </span>
+
+</div>
+
+    </div>
+
+    <div class="input-group">
+
+        <label>Confirm Password</label>
+
+        <div class="password-box">
+
+    <input
+        type="password"
+        id="confirmPassword"
+        placeholder="Confirm Password"
+        required
+    >
+
+    <span
+        class="eye-btn"
+        onclick="togglePassword('confirmPassword')"
+    >
+        👁️
+    </span>
+
+</div>
+
+    </div>
+
+    <button
+        type="submit"
+        id="registerBtn"
+    >
+        Create Account
+    </button>
+
+</form>
+
+<br>
+
+<p>
+    Already have an account?
+    <a href="login.html">Login</a>
+</p>
+
+
+
+<script>
+    function showMessage(
+    message,
+    type
+){
+
+    const box =
+    document.getElementById(
+        "messageBox"
+    );
+
+    box.style.display =
+    "block";
+
+    box.className =
+    type;
+
+    box.innerText =
+    message;
+
+    setTimeout(()=>{
+
+        box.style.display =
+        "none";
+
+    },3000);
+}
+
+function togglePassword(id){
+
+    const input =
+    document.getElementById(id);
+
+    if(input.type === "password"){
+
+        input.type = "text";
+
+    }else{
+
+        input.type = "password";
+    }
+}
+
+document.getElementById("registerForm")
+.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+    const password =
+document.getElementById(
+    "password"
+).value;
+
+const confirmPassword =
+document.getElementById(
+    "confirmPassword"
+).value;
+
+if(password !== confirmPassword){
+
+    showMessage(
+        "Passwords do not match",
+        "error"
+    );
+
+    return;
+}
+
+    const userData = {
+
+        name: document.getElementById("name").value,
+
+        email: document.getElementById("email").value,
+
+        password: document.getElementById("password").value
+    };
+
+    document.getElementById(
+    "registerBtn"
+).innerText =
+"Creating Account...";
+
+    const response = await fetch(
+        "http://localhost:5000/api/auth/register",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(userData)
+        }
+    );
+
+    const data = await response.json();
+
+    showMessage(
+    data.message,
+    response.ok
+    ? "success"
+    : "error"
+);
+
+    if(response.ok){
+
+    setTimeout(()=>{
+
+        window.location.href =
+        "login.html";
+
+    },1500);
+}
+
+});
+
+</script>
+</div>
+</div>
+</body>
+</html>

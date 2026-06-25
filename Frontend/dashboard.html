@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CityFix AI Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="header">
+    <h1>CityFix AI Admin Dashboard</h1>
+</div>
+
+<div class="stats">
+
+    <div class="card">
+        <h2 id="totalComplaints">0</h2>
+        <p>Total Complaints</p>
+    </div>
+
+    <div class="card">
+        <h2 id="pendingComplaints">0</h2>
+        <p>Pending</p>
+    </div>
+
+    <div class="card">
+        <h2 id="resolvedComplaints">0</h2>
+        <p>Resolved</p>
+    </div>
+
+</div>
+
+<canvas id="complaintChart" width="400" height="150"></canvas>
+
+<br><br>
+
+<center>
+
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search Complaint..."
+        onkeyup="loadComplaints()"
+    >
+
+    <br><br>
+
+    <button onclick="filterComplaints('All')">
+        All
+    </button>
+
+    <button onclick="filterComplaints('Pending')">
+        Pending
+    </button>
+
+    <button onclick="filterComplaints('Resolved')">
+        Resolved
+    </button>
+
+    <br><br>
+
+    <button onclick="loadComplaints()">
+        Load Complaints
+    </button>
+
+</center>
+
+<br>
+
+<div id="complaints"></div>
+
+<script>
+    if(!localStorage.getItem("token")){
+    window.location.href = "login.html";
+}
+
+let currentFilter = "All";
+let chart;
+
+function filterComplaints(status){
+    currentFilter = status;
+    loadComplaints();
+}
+
+function createChart(pending, resolved){
+
+    const ctx = document
+        .getElementById("complaintChart")
+        .getContext("2d");
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Pending", "Resolved"],
+            datasets: [{
+                label: "Complaints",
+                data: [pending, resolved]
+            }]
+        }
+    });
+}
+
+async function loadComplaints(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/complaints/all"
+    );
+
+    const data = await response.json();
+
+    document.getElementById("totalComplaints").innerText = data.length;
+
+    const pending = data.filter(
+        c => c.status === "Pending"
+    ).length;
+
+    const resolved = data.filter(
+        c => c.status === "Resolved"
+    ).length;
+
+    document.getElementById("pendingComplaints").innerText = pending;
+    document.getElementById("resolvedComplaints").innerText = resolved;
+
+    createChart(pending, resolved);
+
+    const searchValue = document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+    let output = `
+    <table border="1" width="95%" align="center" cellpadding="10">
+        <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Image</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    `;
+
+    data
+    .filter((complaint) =>
+        complaint.title
+            .toLowerCase()
+            .includes(searchValue)
+    )
+    .filter((complaint) =>
+        currentFilter === "All"
+            ? true
+            : complaint.status === currentFilter
+    )
+    .forEach((complaint) => {
+
+        output += `
+        <tr>
+            <td>${complaint.title}</td>
+            <td>${complaint.category}</td>
+            <td>${complaint.location}</td>
+
+            <td>
+                <img
+                    src="http://localhost:5000/uploads/${complaint.image}"
+                    width="100"
+                    height="80"
+                >
+            </td>
+
+            <td>${complaint.status}</td>
+
+            <td>
+
+                <button onclick="resolveComplaint('${complaint._id}')">
+                    Resolve
+                </button>
+
+                <br><br>
+
+                <button onclick="deleteComplaint('${complaint._id}')">
+                    Delete
+                </button>
+
+            </td>
+        </tr>
+        `;
+    });
+
+    output += `</table>`;
+
+    document.getElementById("complaints").innerHTML = output;
+}
+
+async function resolveComplaint(id){
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/update/${id}`,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                status: "Resolved"
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    loadComplaints();
+}
+
+async function deleteComplaint(id){
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete this complaint?"
+    );
+
+    if(!confirmDelete){
+        return;
+    }
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/delete/${id}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    loadComplaints();
+}
+
+</script>
+
+</body>
+</html>

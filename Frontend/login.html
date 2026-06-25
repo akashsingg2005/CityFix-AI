@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CityFix AI - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="login-container">
+
+    <div class="login-card">
+
+        <h1>🏙️ CityFix AI</h1>
+        <div id="messageBox"></div>
+
+        <p>
+            Smart City Complaint Management System
+        </p>
+
+        <form id="loginForm">
+
+            <div class="input-group">
+
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Enter Email"
+                    required
+                >
+
+            </div>
+
+            <div class="input-group">
+
+                <label>Password</label>
+
+                <div class="password-box">
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter Password"
+                        required
+                    >
+
+                    <span
+                        onclick="togglePassword()"
+                        class="eye-btn"
+                    >
+                        👁️
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="options">
+
+                <label>
+
+                    <input type="checkbox">
+
+                    Remember Me
+
+                </label>
+
+                <a href="#">
+                    Forgot Password?
+                </a>
+
+            </div>
+
+            <button
+                type="submit"
+                id="loginBtn"
+            >
+                Login
+            </button>
+
+        </form>
+
+        <br>
+
+        <p>
+
+            Don't have an account?
+
+            <a href="register.html">
+
+                Register
+
+            </a>
+
+        </p>
+
+    </div>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm")
+.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const loginData = {
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value
+    };
+
+    try {
+        document.getElementById(
+    "loginBtn"
+).innerText =
+"Logging In...";
+
+        const response = await fetch(
+            "http://localhost:5000/api/auth/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(loginData)
+            }
+        );
+
+        const data = await response.json();
+
+        if(response.ok){
+
+            localStorage.setItem(
+                "token",
+                data.token
+            );
+
+            localStorage.setItem(
+                "role",
+                data.role
+            );
+            localStorage.setItem(
+                "userId",
+                data.userId
+            );
+            localStorage.setItem(
+    "name",
+    data.name
+);
+
+            showMessage(
+    "Login Successful ✅",
+    "success"
+);
+
+            if(data.role === "admin"){
+
+                window.location.href =
+                "dashboard-admin-v2.html";
+
+            }
+            else if(data.role === "officer"){
+
+                window.location.href =
+                "dashboard-officer.html";
+
+            }
+            else{
+
+                window.location.href =
+                "complaint.html";
+
+            }
+
+        }else{
+
+    document.getElementById(
+        "loginBtn"
+    ).innerText =
+    "Login";
+
+    showMessage(
+    data.message,
+    "error"
+);
+}
+
+    } catch(error){
+        document.getElementById(
+    "loginBtn"
+).innerText =
+"Login";
+
+        showMessage(
+    "Server Error",
+    "error"
+);
+        console.log(error);
+
+    }
+
+});
+
+function togglePassword(){
+
+    const password =
+    document.getElementById(
+        "password"
+    );
+
+    if(
+        password.type ===
+        "password"
+    ){
+
+        password.type =
+        "text";
+
+    }else{
+
+        password.type =
+        "password";
+    }
+}
+
+function showMessage(
+    message,
+    type
+){
+
+    const box =
+    document.getElementById(
+        "messageBox"
+    );
+
+    box.style.display =
+    "block";
+
+    box.className =
+    type;
+
+    box.innerText =
+    message;
+
+    setTimeout(()=>{
+
+        box.style.display =
+        "none";
+
+    },3000);
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CityFix AI - Officer Dashboard</title>
+
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+
+    <h2>CityFix AI</h2>
+
+    <ul>
+    <li onclick="showSection('dashboardSection')">
+        Dashboard
+    </li>
+
+    <li onclick="showSection('complaintsSection')">
+        Assigned Complaints
+    </li>
+
+    <li onclick="showSection('performanceSection')">
+        Performance
+    </li>
+
+    <li onclick="logout()">
+        Logout
+    </li>
+</ul>
+
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD SECTION -->
+
+<div id="dashboardSection">
+
+    <h1>Welcome Officer</h1>
+
+    <div class="card">
+        <h2 id="officerNameCard">
+            Officer
+        </h2>
+
+        <p>
+            Logged In Officer
+        </p>
+    </div>
+
+    <br>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2 id="totalAssigned">0</h2>
+            <p>Total Assigned</p>
+        </div>
+
+        <div class="card">
+            <h2 id="pendingCount">0</h2>
+            <p>Pending</p>
+        </div>
+
+        <div class="card">
+            <h2 id="progressCount">0</h2>
+            <p>In Progress</p>
+        </div>
+
+        <div class="card">
+            <h2 id="resolvedCount">0</h2>
+            <p>Resolved</p>
+        </div>
+
+        <div class="card">
+            <h2 id="performanceCount">0%</h2>
+            <p>Performance</p>
+        </div>
+
+        <div class="card">
+            <h2 id="highPriorityCount">0</h2>
+            <p>High Priority</p>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- COMPLAINTS SECTION -->
+
+<div id="complaintsSection" style="display:none;">
+
+    <h1>Assigned Complaints</h1>
+
+    <br>
+
+    <input
+        type="text"
+        id="searchComplaint"
+        placeholder="Search Complaint"
+    >
+
+    <select id="statusFilter">
+
+        <option value="">
+            All Status
+        </option>
+
+        <option value="Pending">
+            Pending
+        </option>
+
+        <option value="In Progress">
+            In Progress
+        </option>
+
+        <option value="Resolved">
+            Resolved
+        </option>
+
+    </select>
+
+    <button onclick="filterComplaints()">
+        Search
+    </button>
+
+    <br><br>
+
+    <div id="complaints"></div>
+
+</div>
+    
+<div id="performanceSection" style="display:none;">
+
+    <h1>Performance Report</h1>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2 id="totalAssigned2">0</h2>
+            <p>Total Assigned</p>
+        </div>
+
+        <div class="card">
+            <h2 id="resolved2">0</h2>
+            <p>Resolved</p>
+        </div>
+
+        <div class="card">
+            <h2 id="pending2">0</h2>
+            <p>Pending</p>
+        </div>
+
+    </div>
+
+    <br><br>
+
+    <div
+    style="
+        width:350px;
+        height:350px;
+        margin:auto;
+    "
+>
+    <canvas id="performanceChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+if(localStorage.getItem("role") !== "officer"){
+
+    alert("Access Denied");
+
+    window.location.href = "login.html";
+}
+
+function openImage(src){
+
+    document.getElementById(
+        "imageModal"
+    ).style.display = "block";
+
+    document.getElementById(
+        "modalImage"
+    ).src = src;
+}
+
+function closeImage(){
+
+    document.getElementById(
+        "imageModal"
+    ).style.display = "none";
+}
+
+function showSection(sectionId){
+
+    document.getElementById(
+        "dashboardSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "complaintsSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "performanceSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        sectionId
+    ).style.display = "block";
+}
+let performanceChart;
+
+function createPerformanceChart(
+    pending,
+    progress,
+    resolved
+){
+
+    const ctx =
+    document.getElementById(
+        "performanceChart"
+    ).getContext("2d");
+
+    if(performanceChart){
+        performanceChart.destroy();
+    }
+
+    performanceChart =
+new Chart(ctx,{
+
+    type:"doughnut",
+
+    data:{
+        labels:[
+            "Pending",
+            "In Progress",
+            "Resolved"
+        ],
+
+        datasets:[{
+            data:[
+                pending,
+                progress,
+                resolved
+            ]
+        }]
+    },
+
+    options:{
+
+        responsive:true,
+
+        maintainAspectRatio:true,
+
+        plugins:{
+            legend:{
+                position:"bottom"
+            }
+        }
+    }
+});
+}
+
+async function loadComplaints(){
+
+    const officerId =
+        localStorage.getItem("userId");
+        document.getElementById(
+    "officerNameCard"
+).innerText =
+localStorage.getItem("name");
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/officer/${officerId}`
+    );
+
+    const data = await response.json();
+
+    document.getElementById(
+        "totalAssigned"
+    ).innerText = data.length;
+
+    document.getElementById(
+        "pendingCount"
+    ).innerText =
+    data.filter(
+        c => c.status === "Pending"
+    ).length;
+
+    document.getElementById(
+        "progressCount"
+    ).innerText =
+    data.filter(
+        c => c.status === "In Progress"
+    ).length;
+
+    document.getElementById(
+        "resolvedCount"
+    ).innerText =
+    data.filter(
+        c => c.status === "Resolved"
+    ).length;
+    const resolved =
+data.filter(
+    c => c.status === "Resolved"
+).length;
+
+const performance =
+data.length > 0
+? Math.round(
+    (resolved / data.length) * 100
+)
+: 0;
+
+const highPriority =
+data.filter(
+    c => c.priority === "High"
+).length;
+
+document.getElementById(
+    "highPriorityCount"
+).innerText =
+highPriority;
+
+document.getElementById(
+    "performanceCount"
+).innerText =
+performance + "%";
+
+document.getElementById(
+    "totalAssigned2"
+).innerText = data.length;
+
+document.getElementById(
+    "resolved2"
+).innerText = resolved;
+
+document.getElementById(
+    "pending2"
+).innerText =
+data.filter(
+    c => c.status === "Pending"
+).length;
+
+    let output = "";
+
+    data.forEach((complaint) => {
+
+        output += `
+
+        <div class="card">
+
+            <h2>
+                ${complaint.title}
+            </h2>
+
+            <br>
+
+            <img
+    src="http://localhost:5000/uploads/${complaint.image}"
+    width="250"
+    height="180"
+    style="
+        border-radius:10px;
+        object-fit:cover;
+        cursor:pointer;
+    "
+    onclick="openImage(this.src)"
+>
+
+            <br><br>
+
+            <p>
+                <strong>Category:</strong>
+                ${complaint.category}
+            </p>
+
+            <p>
+                <strong>Location:</strong>
+                ${complaint.location}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                <span class="status-text">
+        ${complaint.status}
+    </span>
+            </p>
+
+            <p>
+                <strong>Priority:</strong>
+                ${complaint.priority}
+            </p>
+
+            <br>
+
+            <input
+                type="text"
+                id="remark-${complaint._id}"
+                value="${complaint.remarks || ''}"
+                placeholder="Add Remarks"
+                style="
+                    width:80%;
+                    padding:8px;
+                "
+            >
+
+            <br><br>
+
+            <button
+                class="progress-btn"
+                onclick="
+                updateStatus(
+                    '${complaint._id}',
+                    'In Progress'
+                )">
+                In Progress
+            </button>
+
+            <button
+                class="resolve-btn"
+                onclick="
+                updateStatus(
+                    '${complaint._id}',
+                    'Resolved'
+                )">
+                Resolve
+            </button>
+
+        </div>
+
+        <br>
+        `;
+    });
+
+    document.getElementById(
+        "complaints"
+    ).innerHTML = output;
+
+    createPerformanceChart(
+    data.filter(c=>c.status==="Pending").length,
+    data.filter(c=>c.status==="In Progress").length,
+    data.filter(c=>c.status==="Resolved").length
+);
+}
+
+function filterComplaints(){
+
+    const search =
+    document.getElementById(
+        "searchComplaint"
+    ).value.toLowerCase();
+
+    const status =
+    document.getElementById(
+        "statusFilter"
+    ).value.toLowerCase();
+
+    const cards =
+    document.querySelectorAll(
+        "#complaints .card"
+    );
+
+    cards.forEach(card => {
+
+        const text =
+        card.innerText.toLowerCase();
+
+        const statusElement =
+        card.querySelector(
+            ".status-text"
+        );
+
+        const statusText =
+        statusElement
+        ? statusElement.innerText.toLowerCase()
+        : "";
+
+        const matchesSearch =
+        text.includes(search);
+
+        const matchesStatus =
+        status === "" ||
+        statusText === status;
+
+        card.style.display =
+        matchesSearch &&
+        matchesStatus
+        ? "block"
+        : "none";
+
+    });
+}
+
+async function updateStatus(
+    id,
+    status
+){
+
+    const remark =
+    document.getElementById(
+        `remark-${id}`
+    ).value;
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/update/${id}`,
+        {
+            method:"PUT",
+
+            headers:{
+                "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+                status,
+                remarks: remark
+            })
+        }
+    );
+
+    const data =
+        await response.json();
+
+    alert(data.message);
+
+    loadComplaints();
+}
+
+function logout(){
+
+    localStorage.clear();
+
+    window.location.href =
+        "login.html";
+}
+showSection(
+    "dashboardSection"
+);
+loadComplaints();
+
+</script>
+<div id="imageModal" class="modal">
+
+    <span
+        class="close"
+        onclick="closeImage()">
+        &times;
+    </span>
+
+    <img
+        id="modalImage"
+        class="modal-content"
+    >
+
+</div>
+</body>
+</html>

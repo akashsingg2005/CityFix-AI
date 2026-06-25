@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CityFix AI Admin Dashboard</title>
+
+    <link rel="stylesheet" href="css/admin.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+
+    <h2>CityFix AI</h2>
+
+<ul>
+    <li onclick="showSection('dashboardSection')">
+        Dashboard
+    </li>
+
+    <li onclick="showSection('complaintsSection')">
+        Complaints
+    </li>
+
+    <li onclick="showSection('officersSection')">
+        Officers
+    </li>
+
+    <li onclick="showSection('usersSection')">
+        Users
+    </li>
+
+    <li onclick="showSection('analyticsSection')">
+        Analytics
+    </li>
+
+    <li onclick="logout()">
+        Logout
+    </li>
+</ul>
+
+</div>
+<div class="main">
+
+<div id="dashboardSection">
+
+    <h1>Admin Dashboard</h1>
+
+    <br>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2 id="totalComplaints">0</h2>
+            <p>Total Complaints</p>
+        </div>
+
+        <div class="card">
+            <h2 id="pendingComplaints">0</h2>
+            <p>Pending</p>
+        </div>
+
+        <div class="card">
+            <h2 id="inProgressComplaints">0</h2>
+            <p>In Progress</p>
+        </div>
+
+        <div class="card">
+            <h2 id="resolvedComplaints">0</h2>
+            <p>Resolved</p>
+        </div>
+
+        <div class="card">
+            <h2 id="totalOfficers">0</h2>
+            <p>Officers</p>
+        </div>
+
+        <div class="card">
+            <h2 id="totalUsers">0</h2>
+            <p>Citizens</p>
+        </div>
+        <div class="card">
+    <h2 id="todayComplaints">0</h2>
+    <p>Today's Complaints</p>
+</div>
+
+<div class="card">
+    <button
+        onclick="exportComplaints()"
+        class="export-btn">
+        Export Report
+    </button>
+
+    <p>Generate PDF Report</p>
+</div>
+
+    </div>
+
+    <br><br>
+
+    <canvas id="complaintChart"></canvas>
+
+    <br><br>
+
+
+    <div id="complaints"></div>
+
+</div>
+
+
+
+<div id="complaintsSection" style="display:none;">
+     <div class="section-header">
+    <h1>Complaint Management</h1>
+</div>
+
+
+    <br>
+
+    <table class="complaint-table">
+
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Set Priority</th>
+                <th>Assigned Officer</th>
+                <th>Officer Remark</th>
+                <th>Assign Officer</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody id="complaintsTable">
+        </tbody>
+
+    </table>
+
+</div>
+
+<div id="officersSection" style="display:none;">
+
+    <h1>Officer Management</h1>
+
+    <br>
+
+    <input
+        type="text"
+        id="officerName"
+        placeholder="Officer Name"
+    >
+
+    <input
+        type="email"
+        id="officerEmail"
+        placeholder="Officer Email"
+    >
+
+    <input
+        type="password"
+        id="officerPassword"
+        placeholder="Officer Password"
+    >
+
+    <button
+        class="assign-btn"
+        onclick="addOfficer()">
+        Add Officer
+    </button>
+
+    <br><br>
+    <div class="card">
+    <h2 id="topOfficer">-</h2>
+    <p>Top Performing Officer</p>
+</div>
+
+    <table class="complaint-table">
+
+        <thead>
+            <tr><tr>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Total Assigned</th>
+    <th>Resolved</th>
+    <th>Pending</th>
+    <th>Performance</th>
+    <th>Action</th>
+</tr>
+            </tr>
+        </thead>
+
+        <tbody id="officersTable">
+        </tbody>
+
+    </table>
+
+</div>
+
+<div id="usersSection" style="display:none;">
+
+    <h1>User Management</h1>
+
+    <br>
+
+    <table class="complaint-table">
+
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+
+        <tbody id="usersTable">
+        </tbody>
+
+    </table>
+
+</div>
+
+<div id="analyticsSection" style="display:none;">
+
+    <h1>Analytics Dashboard</h1>
+
+    <br>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2 id="analyticsTotal">0</h2>
+            <p>Total Complaints</p>
+        </div>
+
+        <div class="card">
+            <h2 id="analyticsPending">0</h2>
+            <p>Pending</p>
+        </div>
+
+        <div class="card">
+            <h2 id="analyticsResolved">0</h2>
+            <p>Resolved</p>
+        </div>
+
+    </div>
+
+    <br><br>
+
+    <canvas id="analyticsChart"></canvas>
+
+</div>
+
+</div>
+
+<script>
+let officers = [];
+async function loadOfficers(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/auth/officers"
+    );
+
+    officers = await response.json();
+}
+
+async function loadComplaints(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/complaints/all"
+    );
+
+    const complaints = await response.json();
+
+    let output = "";
+
+    complaints.forEach((complaint) => {
+
+        let officerOptions = "";
+
+        officers.forEach((officer) => {
+
+            officerOptions += `
+                <option value="${officer._id}">
+                    ${officer.name}
+                </option>
+            `;
+        });
+
+        output += `
+        <tr>
+
+            <td>${complaint.title}</td>
+
+            <td>${complaint.category}</td>
+
+            <td>${complaint.location}</td>
+     <td>
+    <img
+        src="http://localhost:5000/uploads/${complaint.image}"
+        width="80"
+        height="60"
+        style="border-radius:8px; object-fit:cover; cursor:pointer;"
+        onclick="openImage(this.src)"
+    >
+</td>
+
+            <td>${complaint.status}</td>
+
+            <td>
+
+<span class="
+priority-${complaint.priority.toLowerCase()}
+">
+
+${complaint.priority}
+
+</span>
+
+</td>
+            <td>
+
+<select
+    onchange="
+    updatePriority(
+        '${complaint._id}',
+        this.value
+    )">
+
+    <option
+        value="Low"
+        ${
+            complaint.priority === "Low"
+            ? "selected"
+            : ""
+        }>
+        Low
+    </option>
+
+    <option
+        value="Medium"
+        ${
+            complaint.priority === "Medium"
+            ? "selected"
+            : ""
+        }>
+        Medium
+    </option>
+
+    <option
+        value="High"
+        ${
+            complaint.priority === "High"
+            ? "selected"
+            : ""
+        }>
+        High
+    </option>
+
+</select>
+
+</td>
+            <td>
+    ${
+        complaint.assignedTo
+        ? `<span class="assigned">${complaint.assignedTo.name}</span>`
+        : "Not Assigned"
+    }
+</td>
+
+<td class="remark">
+    ${
+        complaint.remarks
+        ? complaint.remarks
+        : "No Remarks"
+    }
+</td>
+
+            <td>
+
+                <select id="officer-${complaint._id}">
+                    <option value="">
+                        Select Officer
+                    </option>
+
+                    ${officerOptions}
+                </select>
+
+                <br><br>
+
+                <button class="assign-btn" onclick="assignComplaint('${complaint._id}')">
+                    Assign
+                </button>
+
+            </td>
+
+            <td>
+
+                <button class="progress-btn" onclick="inProgressComplaint('${complaint._id}')">
+                    In Progress
+                </button>
+
+                <button class="resolve-btn" onclick="resolveComplaint('${complaint._id}')">
+                    Resolve
+                </button>
+
+                <button class="delete-btn" onclick="deleteComplaint('${complaint._id}')">
+                    Delete
+                </button>
+
+            </td>
+
+        </tr>
+        `;
+    });
+
+    document.getElementById(
+        "complaintsTable"
+    ).innerHTML = output;
+}
+ function showSection(sectionId){
+
+    document.getElementById(
+        "dashboardSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "complaintsSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "officersSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "usersSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "analyticsSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        sectionId
+    ).style.display = "block";
+}
+
+// Admin Protection
+if(localStorage.getItem("role") !== "admin"){
+    window.location.href="login.html";
+}
+
+function logout(){
+
+    localStorage.clear();
+
+    window.location.href="login.html";
+}
+
+let chart;
+
+function createChart(
+    pending,
+    inProgress,
+    resolved
+){
+
+    const ctx = document
+        .getElementById("complaintChart")
+        .getContext("2d");
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+
+        type: "bar",
+
+        data: {
+
+            labels: [
+                "Pending",
+                "In Progress",
+                "Resolved"
+            ],
+
+            datasets: [{
+
+                label: "Complaints",
+
+                data: [
+                    pending,
+                    inProgress,
+                    resolved
+                ]
+
+            }]
+        }
+    });
+}
+
+let analyticsChart;
+
+function createAnalyticsChart(
+    pending,
+    inProgress,
+    resolved
+){
+
+    const ctx = document
+        .getElementById("analyticsChart")
+        .getContext("2d");
+
+    if(analyticsChart){
+        analyticsChart.destroy();
+    }
+
+    analyticsChart = new Chart(ctx, {
+
+        type:"pie",
+
+        data:{
+            labels:[
+                "Pending",
+                "In Progress",
+                "Resolved"
+            ],
+
+            datasets:[{
+                data:[
+                    pending,
+                    inProgress,
+                    resolved
+                ],
+
+                backgroundColor:[
+                    "#f59e0b",
+                    "#3b82f6",
+                    "#22c55e"
+                ]
+            }]
+        }
+    });
+}
+
+async function loadDashboard(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/complaints/all"
+    );
+
+    const data = await response.json();
+
+    
+
+    const total = data.length;
+    const today = new Date().toDateString();
+
+const todayComplaints = data.filter(
+    complaint =>
+        new Date(
+            complaint.createdAt
+        ).toDateString() === today
+).length;
+
+    const pending = data.filter(
+        c => c.status === "Pending"
+    ).length;
+
+    const inProgress = data.filter(
+        c => c.status === "In Progress"
+    ).length;
+
+    const resolved = data.filter(
+        c => c.status === "Resolved"
+    ).length;
+
+    document.getElementById(
+        "totalComplaints"
+    ).innerText = total;
+
+    document.getElementById(
+        "pendingComplaints"
+    ).innerText = pending;
+
+    document.getElementById(
+        "inProgressComplaints"
+    ).innerText = inProgress;
+
+    document.getElementById(
+        "resolvedComplaints"
+    ).innerText = resolved;
+
+    createChart(
+        pending,
+        inProgress,
+        resolved
+    );
+
+
+    const userResponse = await fetch(
+    "http://localhost:5000/api/auth/users"
+);
+
+const users = await userResponse.json();
+
+const officerCount = users.filter(
+    user => user.role === "officer"
+).length;
+
+const citizens = users.filter(
+    user => user.role === "citizen"
+).length;
+
+document.getElementById(
+    "totalOfficers"
+).innerText = officerCount;
+
+document.getElementById(
+    "totalUsers"
+).innerText = citizens;
+document.getElementById(
+    "todayComplaints"
+).innerText = todayComplaints;
+
+}
+
+function exportComplaints(){
+
+    window.print();
+
+}
+
+
+async function resolveComplaint(id){
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/update/${id}`,
+        {
+            method: "PUT",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                status:"Resolved"
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+    loadDashboard();
+loadComplaints();
+loadOfficerTable();
+
+
+}
+
+async function deleteComplaint(id){
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete this complaint?"
+    );
+
+    if(!confirmDelete){
+        return;
+    }
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/delete/${id}`,
+        {
+            method:"DELETE"
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+    loadDashboard();
+loadComplaints();
+loadOfficerTable();
+
+
+}
+
+async function inProgressComplaint(id){
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/update/${id}`,
+        {
+            method:"PUT",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                status:"In Progress"
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+    loadDashboard();
+loadComplaints();
+loadOfficerTable();
+
+
+} 
+
+async function assignComplaint(id){
+
+    const officerId = document.getElementById(
+        `officer-${id}`
+    ).value;
+
+    if(!officerId){
+
+        alert("Please Select Officer");
+
+        return;
+    }
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/assign/${id}`,
+        {
+            method:"PUT",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body: JSON.stringify({
+                officerId
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+    loadDashboard();
+loadComplaints();
+loadOfficerTable();
+
+    
+}
+
+async function loadOfficerTable(){
+
+    const officerResponse = await fetch(
+        "http://localhost:5000/api/auth/officers"
+    );
+
+    const officers = await officerResponse.json();
+
+    const complaintResponse = await fetch(
+        "http://localhost:5000/api/complaints/all"
+    );
+
+    const complaints = await complaintResponse.json();
+    let bestOfficer = "";
+    let bestPerformance = -1;
+    let output = "";
+
+    officers.forEach((officer) => {
+
+        const assigned = complaints.filter(
+            complaint =>
+                complaint.assignedTo &&
+                complaint.assignedTo._id === officer._id
+        );
+
+        const totalAssigned = assigned.length;
+
+        const resolved = assigned.filter(
+            c => c.status === "Resolved"
+        ).length;
+
+        const pending = assigned.filter(
+            c => c.status !== "Resolved"
+        ).length;
+
+        const performance =
+            totalAssigned > 0
+            ? Math.round(
+                (resolved / totalAssigned) * 100
+              )
+            : 0;
+            if(performance > bestPerformance){
+
+    bestPerformance = performance;
+
+    bestOfficer =
+`${officer.name} (${performance}%)`;
+}
+
+        output += `
+        <tr>
+
+            <td>${officer.name}</td>
+
+            <td>${officer.email}</td>
+
+            <td>${totalAssigned}</td>
+
+            <td>${resolved}</td>
+
+            <td>${pending}</td>
+
+            <td>
+                <div class="performance-bar">
+                    <div
+                        class="performance-fill"
+                        style="width:${performance}%">
+                    </div>
+                </div>
+
+                ${performance}%
+            </td>
+
+            <td>
+                <button
+                    class="delete-btn"
+                    onclick="deleteOfficer('${officer._id}')">
+                    Delete
+                </button>
+            </td>
+
+        </tr>
+        `;
+    });
+
+    document.getElementById(
+        "officersTable"
+    ).innerHTML = output;
+    document.getElementById(
+    "topOfficer"
+).innerText =
+bestOfficer || "No Data";
+}
+
+
+async function loadUsers(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/auth/users"
+    );
+
+    const users = await response.json();
+
+    let output = "";
+
+    users.forEach((user) => {
+
+        output += `
+        <tr>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+        </tr>
+        `;
+    });
+
+    document.getElementById(
+        "usersTable"
+    ).innerHTML = output;
+}
+
+async function loadAnalytics(){
+
+    const response = await fetch(
+        "http://localhost:5000/api/complaints/all"
+    );
+
+    const complaints = await response.json();
+
+    const pending = complaints.filter(
+        c => c.status === "Pending"
+    ).length;
+
+    const inProgress = complaints.filter(
+        c => c.status === "In Progress"
+    ).length;
+
+    const resolved = complaints.filter(
+        c => c.status === "Resolved"
+    ).length;
+
+    document.getElementById(
+        "analyticsTotal"
+    ).innerText = complaints.length;
+
+    document.getElementById(
+        "analyticsPending"
+    ).innerText = pending;
+
+    document.getElementById(
+        "analyticsResolved"
+    ).innerText = resolved;
+
+    createAnalyticsChart(
+        pending,
+        inProgress,
+        resolved
+    );
+}
+
+function openImage(src){
+
+    document.getElementById(
+        "imageModal"
+    ).style.display = "block";
+
+    document.getElementById(
+        "modalImage"
+    ).src = src;
+}
+
+async function updatePriority(
+    id,
+    priority
+){
+
+    const response = await fetch(
+        `http://localhost:5000/api/complaints/priority/${id}`,
+        {
+            method:"PUT",
+
+            headers:{
+                "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+                priority
+            })
+        }
+    );
+
+    const data =
+        await response.json();
+
+    alert(data.message);
+
+    loadComplaints();
+}
+
+function closeImage(){
+
+    document.getElementById(
+        "imageModal"
+    ).style.display = "none";
+}
+
+async function addOfficer(){
+
+    const name =
+        document.getElementById(
+            "officerName"
+        ).value;
+
+    const email =
+        document.getElementById(
+            "officerEmail"
+        ).value;
+
+    const password =
+        document.getElementById(
+            "officerPassword"
+        ).value;
+
+    const response = await fetch(
+        "http://localhost:5000/api/auth/officer/add",
+        {
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body: JSON.stringify({
+                name,
+                email,
+                password
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    loadOfficerTable();
+}
+
+async function deleteOfficer(id){
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete this officer?"
+    );
+
+    if(!confirmDelete){
+        return;
+    }
+
+    const response = await fetch(
+        `http://localhost:5000/api/auth/officer/delete/${id}`,
+        {
+            method:"DELETE"
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    loadOfficerTable();
+}
+
+loadDashboard();
+
+loadOfficers().then(() => {
+
+    loadComplaints();
+
+    loadOfficerTable();
+
+    loadUsers();
+
+    loadAnalytics();
+
+});
+</script>
+
+<div id="imageModal" class="modal">
+
+    <span class="close" onclick="closeImage()">
+        &times;
+    </span>
+
+    <img
+        id="modalImage"
+        class="modal-content"
+    >
+
+</div>
+
+</body>
+</html>
